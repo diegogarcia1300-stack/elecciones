@@ -1,510 +1,715 @@
-{
-  "nbformat": 4,
-  "nbformat_minor": 0,
-  "metadata": {
-    "colab": {
-      "provenance": [],
-      "authorship_tag": "ABX9TyPKpxqVY5a5uO7xYTTZvzkq",
-      "include_colab_link": true
-    },
-    "kernelspec": {
-      "name": "python3",
-      "display_name": "Python 3"
-    },
-    "language_info": {
-      "name": "python"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MD Convert</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0c0c0f;
+    --surface: #141418;
+    --border: #242428;
+    --border-bright: #3a3a40;
+    --accent: #c8f25a;
+    --accent-dim: #8fb33a;
+    --text: #f0f0e8;
+    --text-muted: #6b6b72;
+    --text-mid: #a8a8b0;
+    --danger: #f25a5a;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+    --radius: 6px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px 80px;
+  }
+
+  header {
+    width: 100%;
+    max-width: 640px;
+    margin-bottom: 56px;
+  }
+
+  .wordmark {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .wordmark::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  h1 {
+    font-family: var(--sans);
+    font-size: clamp(36px, 6vw, 60px);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .subtitle {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  main {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* API KEY */
+  .api-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .api-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  input[type="password"], input[type="text"] {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type="password"]:focus, input[type="text"]:focus {
+    border-color: var(--border-bright);
+  }
+
+  input[type="password"]::placeholder {
+    color: var(--text-muted);
+  }
+
+  /* DROP ZONE */
+  .dropzone {
+    border: 1px dashed var(--border-bright);
+    border-radius: var(--radius);
+    padding: 48px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dropzone:hover, .dropzone.dragover {
+    border-color: var(--accent);
+    background: rgba(200, 242, 90, 0.03);
+  }
+
+  .dropzone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .drop-icon {
+    font-size: 32px;
+    margin-bottom: 14px;
+    display: block;
+    filter: grayscale(0.3);
+  }
+
+  .drop-title {
+    font-family: var(--sans);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .drop-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  /* FILE SELECTED STATE */
+  .file-pill {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+  }
+
+  .file-pill-icon {
+    font-size: 20px;
+  }
+
+  .file-pill-name {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-pill-size {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .file-clear {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 3px;
+    transition: color 0.15s;
+    font-family: var(--mono);
+  }
+
+  .file-clear:hover { color: var(--danger); }
+
+  /* CONVERT BUTTON */
+  .convert-btn {
+    background: var(--accent);
+    color: #0c0c0f;
+    border: none;
+    border-radius: var(--radius);
+    padding: 16px 32px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    width: 100%;
+  }
+
+  .convert-btn:hover { background: #d6f76e; }
+  .convert-btn:active { transform: scale(0.99); }
+  .convert-btn:disabled {
+    background: var(--border-bright);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* PROGRESS */
+  .progress-bar-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    height: 4px;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  .status-line {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .status-line.error {
+    color: var(--danger);
+  }
+
+  /* RESULT */
+  .result-box {
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .result-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .result-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .result-btn {
+    background: none;
+    border: 1px solid var(--border-bright);
+    border-radius: 4px;
+    padding: 5px 12px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-mid);
+    cursor: pointer;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .result-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .result-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0c0c0f;
+    font-weight: 700;
+  }
+
+  .result-btn.primary:hover {
+    background: #d6f76e;
+    border-color: #d6f76e;
+    color: #0c0c0f;
+  }
+
+  textarea.result-preview {
+    width: 100%;
+    min-height: 240px;
+    background: transparent;
+    border: none;
+    padding: 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-mid);
+    line-height: 1.75;
+    resize: vertical;
+    outline: none;
+  }
+
+  /* FORMATS */
+  .formats-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .format-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 3px 8px;
+    letter-spacing: 0.05em;
+  }
+
+  .hidden { display: none !important; }
+
+  /* Spinner animation on button */
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--text-muted);
+    border-top-color: var(--text);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  footer {
+    margin-top: 56px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">MD Convert</div>
+  <h1>Any file.<br><span>Pure markdown.</span></h1>
+  <p class="subtitle">Upload a PDF, DOCX, PPTX, or spreadsheet.<br>Download clean Markdown instantly.</p>
+</header>
+
+<main>
+
+  <!-- API Key -->
+  <div class="api-row">
+    <span class="api-label">API Key</span>
+    <input type="password" id="apiKey" placeholder="sk-ant-..." />
+  </div>
+
+  <!-- Drop zone -->
+  <div class="dropzone" id="dropzone">
+    <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.csv,.txt,.html,.md" />
+    <span class="drop-icon">📄</span>
+    <div class="drop-title">Drop your file here</div>
+    <div class="drop-sub">or click to browse</div>
+  </div>
+
+  <!-- File pill (hidden until file selected) -->
+  <div class="file-pill hidden" id="filePill">
+    <span class="file-pill-icon" id="pillIcon">📄</span>
+    <span class="file-pill-name" id="pillName"></span>
+    <span class="file-pill-size" id="pillSize"></span>
+    <button class="file-clear" id="fileClear">✕</button>
+  </div>
+
+  <!-- Supported formats -->
+  <div class="formats-row">
+    <span class="format-tag">PDF</span>
+    <span class="format-tag">DOCX</span>
+    <span class="format-tag">PPTX</span>
+    <span class="format-tag">XLSX</span>
+    <span class="format-tag">CSV</span>
+    <span class="format-tag">TXT</span>
+    <span class="format-tag">HTML</span>
+  </div>
+
+  <!-- Convert button -->
+  <button class="convert-btn" id="convertBtn" disabled>Convert to Markdown</button>
+
+  <!-- Progress -->
+  <div class="hidden" id="progressWrap">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+  </div>
+
+  <div class="status-line hidden" id="statusLine"></div>
+
+  <!-- Result -->
+  <div class="result-box hidden" id="resultBox">
+    <div class="result-header">
+      <span class="result-title">Output — Markdown</span>
+      <div class="result-actions">
+        <button class="result-btn" id="copyBtn">Copy</button>
+        <button class="result-btn primary" id="downloadBtn">↓ Download .md</button>
+      </div>
+    </div>
+    <textarea class="result-preview" id="resultText" readonly></textarea>
+  </div>
+
+</main>
+
+<footer>
+  Powered by Claude · Files are processed via the Anthropic API<br>
+  Your file is not stored anywhere
+</footer>
+
+<script>
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const filePill = document.getElementById('filePill');
+  const pillName = document.getElementById('pillName');
+  const pillSize = document.getElementById('pillSize');
+  const pillIcon = document.getElementById('pillIcon');
+  const fileClear = document.getElementById('fileClear');
+  const convertBtn = document.getElementById('convertBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressBar = document.getElementById('progressBar');
+  const statusLine = document.getElementById('statusLine');
+  const resultBox = document.getElementById('resultBox');
+  const resultText = document.getElementById('resultText');
+  const copyBtn = document.getElementById('copyBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const apiKey = document.getElementById('apiKey');
+
+  let selectedFile = null;
+
+  const ICONS = {
+    pdf: '📕', docx: '📘', doc: '📘', pptx: '📙', ppt: '📙',
+    xlsx: '📗', xls: '📗', csv: '📊', txt: '📄', html: '🌐', md: '📝'
+  };
+
+  const MIME_TYPES = {
+    pdf: 'application/pdf',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    txt: 'text/plain',
+    html: 'text/html',
+    csv: 'text/plain',
+    md: 'text/plain',
+  };
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  function getExt(name) {
+    return name.split('.').pop().toLowerCase();
+  }
+
+  function setFile(file) {
+    selectedFile = file;
+    const ext = getExt(file.name);
+    dropzone.classList.add('hidden');
+    filePill.classList.remove('hidden');
+    pillName.textContent = file.name;
+    pillSize.textContent = formatBytes(file.size);
+    pillIcon.textContent = ICONS[ext] || '📄';
+    convertBtn.disabled = false;
+    hideResult();
+  }
+
+  function clearFile() {
+    selectedFile = null;
+    fileInput.value = '';
+    dropzone.classList.remove('hidden');
+    filePill.classList.add('hidden');
+    convertBtn.disabled = true;
+    hideResult();
+  }
+
+  function hideResult() {
+    resultBox.classList.add('hidden');
+    statusLine.classList.add('hidden');
+    progressWrap.classList.add('hidden');
+    progressBar.style.width = '0%';
+  }
+
+  fileInput.addEventListener('change', e => {
+    if (e.target.files[0]) setFile(e.target.files[0]);
+  });
+
+  fileClear.addEventListener('click', clearFile);
+
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+  });
+
+  function setStatus(msg, isError = false) {
+    statusLine.textContent = msg;
+    statusLine.classList.remove('hidden');
+    statusLine.className = 'status-line' + (isError ? ' error' : '');
+  }
+
+  function setProgress(pct) {
+    progressWrap.classList.remove('hidden');
+    progressBar.style.width = pct + '%';
+  }
+
+  function toBase64(file) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result.split(',')[1]);
+      r.onerror = () => rej(new Error('Read failed'));
+      r.readAsDataURL(file);
+    });
+  }
+
+  function getMimeType(file) {
+    const ext = getExt(file.name);
+    return MIME_TYPES[ext] || file.type || 'application/octet-stream';
+  }
+
+  function buildPrompt(filename) {
+    return `Convert the attached file "${filename}" into clean, well-structured Markdown.
+
+Rules:
+- Preserve all headings, subheadings, and document hierarchy using # ## ### etc.
+- Convert tables to proper Markdown table syntax.
+- Preserve lists (bullet and numbered).
+- Format code blocks with triple backticks and language hints if present.
+- Preserve bold and italic emphasis where clearly indicated.
+- For PDFs and documents: extract all text content faithfully.
+- For spreadsheets/CSVs: convert each sheet/table to a Markdown table with a heading for each sheet name.
+- For presentations: use slide titles as headings and bullet points for slide content.
+- Do not add commentary, explanations, or preamble. Output ONLY the Markdown content, nothing else.`;
+  }
+
+  convertBtn.addEventListener('click', async () => {
+    const key = apiKey.value.trim();
+    if (!key) { setStatus('Enter your Anthropic API key first.', true); return; }
+    if (!selectedFile) return;
+
+    const ext = getExt(selectedFile.name);
+    const mimeType = getMimeType(selectedFile);
+
+    convertBtn.disabled = true;
+    convertBtn.innerHTML = '<span class="spinner"></span>Converting...';
+    hideResult();
+    setProgress(10);
+    setStatus('Reading file...');
+
+    try {
+      let base64Data;
+      try {
+        base64Data = await toBase64(selectedFile);
+      } catch {
+        throw new Error('Could not read the file.');
+      }
+
+      setProgress(30);
+      setStatus('Sending to Claude...');
+
+      const isTextBased = ['txt', 'csv', 'html', 'md'].includes(ext);
+      let messageContent;
+
+      if (isTextBased) {
+        const text = await selectedFile.text();
+        messageContent = [
+          { type: 'text', text: buildPrompt(selectedFile.name) + '\n\nFile content:\n\n' + text }
+        ];
+      } else if (mimeType === 'application/pdf') {
+        messageContent = [
+          {
+            type: 'document',
+            source: { type: 'base64', media_type: 'application/pdf', data: base64Data }
+          },
+          { type: 'text', text: buildPrompt(selectedFile.name) }
+        ];
+      } else {
+        messageContent = [
+          {
+            type: 'document',
+            source: { type: 'base64', media_type: mimeType, data: base64Data }
+          },
+          { type: 'text', text: buildPrompt(selectedFile.name) }
+        ];
+      }
+
+      setProgress(50);
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': key,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-calls': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-5',
+          max_tokens: 8000,
+          messages: [{ role: 'user', content: messageContent }]
+        })
+      });
+
+      setProgress(85);
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `API error ${response.status}`);
+      }
+
+      const data = await response.json();
+      const markdown = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+
+      setProgress(100);
+      setStatus('Done.');
+
+      resultText.value = markdown;
+      resultBox.classList.remove('hidden');
+
+      const baseName = selectedFile.name.replace(/\.[^.]+$/, '');
+      downloadBtn.onclick = () => {
+        const blob = new Blob([markdown], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = baseName + '.md';
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+    } catch (err) {
+      setProgress(0);
+      setStatus('Error: ' + err.message, true);
+    } finally {
+      convertBtn.disabled = false;
+      convertBtn.innerHTML = 'Convert to Markdown';
     }
-  },
-  "cells": [
-    {
-      "cell_type": "markdown",
-      "metadata": {
-        "id": "view-in-github",
-        "colab_type": "text"
-      },
-      "source": [
-        "<a href=\"https://colab.research.google.com/github/diegogarcia1300-stack/elecciones/blob/main/markitdown.ipynb\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
-      ]
-    },
-    {
-      "cell_type": "code",
-      "execution_count": 1,
-      "metadata": {
-        "colab": {
-          "base_uri": "https://localhost:8080/"
-        },
-        "id": "p81mfH_7vzkD",
-        "outputId": "0f381da4-58fa-4e55-f693-0cb2b6df532c"
-      },
-      "outputs": [
-        {
-          "output_type": "stream",
-          "name": "stdout",
-          "text": [
-            "Collecting markitdown[all]\n",
-            "  Downloading markitdown-0.1.6-py3-none-any.whl.metadata (4.9 kB)\n",
-            "Requirement already satisfied: beautifulsoup4 in /usr/local/lib/python3.12/dist-packages (from markitdown[all]) (4.13.5)\n",
-            "Requirement already satisfied: charset-normalizer in /usr/local/lib/python3.12/dist-packages (from markitdown[all]) (3.4.7)\n",
-            "Requirement already satisfied: defusedxml in /usr/local/lib/python3.12/dist-packages (from markitdown[all]) (0.7.1)\n",
-            "Collecting magika~=0.6.1 (from markitdown[all])\n",
-            "  Downloading magika-0.6.3-py3-none-manylinux_2_28_x86_64.whl.metadata (10 kB)\n",
-            "Collecting markdownify (from markitdown[all])\n",
-            "  Downloading markdownify-1.2.2-py3-none-any.whl.metadata (9.9 kB)\n",
-            "Requirement already satisfied: requests in /usr/local/lib/python3.12/dist-packages (from markitdown[all]) (2.32.4)\n",
-            "Collecting azure-ai-contentunderstanding>=1.2.0b1 (from markitdown[all])\n",
-            "  Downloading azure_ai_contentunderstanding-1.2.0b1-py3-none-any.whl.metadata (42 kB)\n",
-            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m42.1/42.1 kB\u001b[0m \u001b[31m1.6 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hCollecting azure-ai-documentintelligence (from markitdown[all])\n",
-            "  Downloading azure_ai_documentintelligence-1.0.2-py3-none-any.whl.metadata (53 kB)\n",
-            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m53.0/53.0 kB\u001b[0m \u001b[31m2.3 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hCollecting azure-identity (from markitdown[all])\n",
-            "  Downloading azure_identity-1.25.3-py3-none-any.whl.metadata (91 kB)\n",
-            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m91.7/91.7 kB\u001b[0m \u001b[31m5.8 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hRequirement already satisfied: lxml in /usr/local/lib/python3.12/dist-packages (from markitdown[all]) (6.1.1)\n",
-            "Collecting mammoth~=1.11.0 (from markitdown[all])\n",
-            "  Downloading mammoth-1.11.0-py2.py3-none-any.whl.metadata (26 kB)\n",
-            "Collecting olefile (from markitdown[all])\n",
-            "  Downloading olefile-0.47-py2.py3-none-any.whl.metadata (9.7 kB)\n",
-            "Requirement already satisfied: openpyxl in /usr/local/lib/python3.12/dist-packages (from markitdown[all]) (3.1.5)\n",
-            "Requirement already satisfied: pandas in /usr/local/lib/python3.12/dist-packages (from markitdown[all]) (2.2.2)\n",
-            "Collecting pdfminer-six>=20251230 (from markitdown[all])\n",
-            "  Downloading pdfminer_six-20260107-py3-none-any.whl.metadata (4.3 kB)\n",
-            "Collecting pdfplumber>=0.11.9 (from markitdown[all])\n",
-            "  Downloading pdfplumber-0.11.9-py3-none-any.whl.metadata (43 kB)\n",
-            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m43.6/43.6 kB\u001b[0m \u001b[31m1.8 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hRequirement already satisfied: pydub in /usr/local/lib/python3.12/dist-packages (from markitdown[all]) (0.25.1)\n",
-            "Collecting python-pptx (from markitdown[all])\n",
-            "  Downloading python_pptx-1.0.2-py3-none-any.whl.metadata (2.5 kB)\n",
-            "Collecting speechrecognition (from markitdown[all])\n",
-            "  Downloading speechrecognition-3.16.1-py3-none-any.whl.metadata (28 kB)\n",
-            "Requirement already satisfied: xlrd in /usr/local/lib/python3.12/dist-packages (from markitdown[all]) (2.0.2)\n",
-            "Collecting youtube-transcript-api~=1.0.0 (from markitdown[all])\n",
-            "  Downloading youtube_transcript_api-1.0.3-py3-none-any.whl.metadata (23 kB)\n",
-            "Collecting isodate>=0.6.1 (from azure-ai-contentunderstanding>=1.2.0b1->markitdown[all])\n",
-            "  Downloading isodate-0.7.2-py3-none-any.whl.metadata (11 kB)\n",
-            "Collecting azure-core>=1.37.0 (from azure-ai-contentunderstanding>=1.2.0b1->markitdown[all])\n",
-            "  Downloading azure_core-1.41.0-py3-none-any.whl.metadata (49 kB)\n",
-            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m50.0/50.0 kB\u001b[0m \u001b[31m1.7 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hRequirement already satisfied: typing-extensions>=4.6.0 in /usr/local/lib/python3.12/dist-packages (from azure-ai-contentunderstanding>=1.2.0b1->markitdown[all]) (4.15.0)\n",
-            "Requirement already satisfied: click>=8.1.7 in /usr/local/lib/python3.12/dist-packages (from magika~=0.6.1->markitdown[all]) (8.4.0)\n",
-            "Collecting onnxruntime>=1.17.0 (from magika~=0.6.1->markitdown[all])\n",
-            "  Downloading onnxruntime-1.26.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)\n",
-            "Requirement already satisfied: numpy>=1.26 in /usr/local/lib/python3.12/dist-packages (from magika~=0.6.1->markitdown[all]) (2.0.2)\n",
-            "Requirement already satisfied: python-dotenv>=1.0.1 in /usr/local/lib/python3.12/dist-packages (from magika~=0.6.1->markitdown[all]) (1.2.2)\n",
-            "Collecting cobble<0.2,>=0.1.3 (from mammoth~=1.11.0->markitdown[all])\n",
-            "  Downloading cobble-0.1.4-py3-none-any.whl.metadata (2.7 kB)\n",
-            "Requirement already satisfied: cryptography>=36.0.0 in /usr/local/lib/python3.12/dist-packages (from pdfminer-six>=20251230->markitdown[all]) (48.0.0)\n",
-            "Collecting pdfminer-six>=20251230 (from markitdown[all])\n",
-            "  Downloading pdfminer_six-20251230-py3-none-any.whl.metadata (4.3 kB)\n",
-            "Requirement already satisfied: Pillow>=9.1 in /usr/local/lib/python3.12/dist-packages (from pdfplumber>=0.11.9->markitdown[all]) (11.3.0)\n",
-            "Collecting pypdfium2>=4.18.0 (from pdfplumber>=0.11.9->markitdown[all])\n",
-            "  Downloading pypdfium2-5.9.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (68 kB)\n",
-            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m68.4/68.4 kB\u001b[0m \u001b[31m6.3 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hCollecting msal>=1.35.1 (from azure-identity->markitdown[all])\n",
-            "  Downloading msal-1.37.0-py3-none-any.whl.metadata (11 kB)\n",
-            "Collecting msal-extensions>=1.2.0 (from azure-identity->markitdown[all])\n",
-            "  Downloading msal_extensions-1.3.1-py3-none-any.whl.metadata (7.8 kB)\n",
-            "Requirement already satisfied: soupsieve>1.2 in /usr/local/lib/python3.12/dist-packages (from beautifulsoup4->markitdown[all]) (2.8.3)\n",
-            "Requirement already satisfied: six<2,>=1.15 in /usr/local/lib/python3.12/dist-packages (from markdownify->markitdown[all]) (1.17.0)\n",
-            "Requirement already satisfied: et-xmlfile in /usr/local/lib/python3.12/dist-packages (from openpyxl->markitdown[all]) (2.0.0)\n",
-            "Requirement already satisfied: python-dateutil>=2.8.2 in /usr/local/lib/python3.12/dist-packages (from pandas->markitdown[all]) (2.9.0.post0)\n",
-            "Requirement already satisfied: pytz>=2020.1 in /usr/local/lib/python3.12/dist-packages (from pandas->markitdown[all]) (2025.2)\n",
-            "Requirement already satisfied: tzdata>=2022.7 in /usr/local/lib/python3.12/dist-packages (from pandas->markitdown[all]) (2026.2)\n",
-            "Collecting XlsxWriter>=0.5.7 (from python-pptx->markitdown[all])\n",
-            "  Downloading xlsxwriter-3.2.9-py3-none-any.whl.metadata (2.7 kB)\n",
-            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.12/dist-packages (from requests->markitdown[all]) (3.15)\n",
-            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.12/dist-packages (from requests->markitdown[all]) (2.5.0)\n",
-            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.12/dist-packages (from requests->markitdown[all]) (2026.5.20)\n",
-            "Requirement already satisfied: cffi>=2.0.0 in /usr/local/lib/python3.12/dist-packages (from cryptography>=36.0.0->pdfminer-six>=20251230->markitdown[all]) (2.0.0)\n",
-            "Requirement already satisfied: PyJWT<3,>=1.0.0 in /usr/local/lib/python3.12/dist-packages (from PyJWT[crypto]<3,>=1.0.0->msal>=1.35.1->azure-identity->markitdown[all]) (2.13.0)\n",
-            "Requirement already satisfied: flatbuffers in /usr/local/lib/python3.12/dist-packages (from onnxruntime>=1.17.0->magika~=0.6.1->markitdown[all]) (25.12.19)\n",
-            "Requirement already satisfied: packaging in /usr/local/lib/python3.12/dist-packages (from onnxruntime>=1.17.0->magika~=0.6.1->markitdown[all]) (26.2)\n",
-            "Requirement already satisfied: protobuf in /usr/local/lib/python3.12/dist-packages (from onnxruntime>=1.17.0->magika~=0.6.1->markitdown[all]) (5.29.6)\n",
-            "Requirement already satisfied: pycparser in /usr/local/lib/python3.12/dist-packages (from cffi>=2.0.0->cryptography>=36.0.0->pdfminer-six>=20251230->markitdown[all]) (3.0)\n",
-            "Downloading azure_ai_contentunderstanding-1.2.0b1-py3-none-any.whl (111 kB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m111.0/111.0 kB\u001b[0m \u001b[31m7.1 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading magika-0.6.3-py3-none-manylinux_2_28_x86_64.whl (15.4 MB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m15.4/15.4 MB\u001b[0m \u001b[31m61.9 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading mammoth-1.11.0-py2.py3-none-any.whl (54 kB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m54.8/54.8 kB\u001b[0m \u001b[31m2.7 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading pdfplumber-0.11.9-py3-none-any.whl (60 kB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m60.0/60.0 kB\u001b[0m \u001b[31m3.9 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading pdfminer_six-20251230-py3-none-any.whl (6.6 MB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m6.6/6.6 MB\u001b[0m \u001b[31m81.6 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading youtube_transcript_api-1.0.3-py3-none-any.whl (2.2 MB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m2.2/2.2 MB\u001b[0m \u001b[31m64.6 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading azure_ai_documentintelligence-1.0.2-py3-none-any.whl (106 kB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m106.0/106.0 kB\u001b[0m \u001b[31m6.9 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading azure_identity-1.25.3-py3-none-any.whl (192 kB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m192.1/192.1 kB\u001b[0m \u001b[31m15.8 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading markdownify-1.2.2-py3-none-any.whl (15 kB)\n",
-            "Downloading markitdown-0.1.6-py3-none-any.whl (70 kB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m70.0/70.0 kB\u001b[0m \u001b[31m4.5 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading olefile-0.47-py2.py3-none-any.whl (114 kB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m114.6/114.6 kB\u001b[0m \u001b[31m10.7 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading python_pptx-1.0.2-py3-none-any.whl (472 kB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m472.8/472.8 kB\u001b[0m \u001b[31m37.7 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading speechrecognition-3.16.1-py3-none-any.whl (32.9 MB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m32.9/32.9 MB\u001b[0m \u001b[31m19.0 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading azure_core-1.41.0-py3-none-any.whl (220 kB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m220.9/220.9 kB\u001b[0m \u001b[31m21.2 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading cobble-0.1.4-py3-none-any.whl (4.0 kB)\n",
-            "Downloading isodate-0.7.2-py3-none-any.whl (22 kB)\n",
-            "Downloading msal-1.37.0-py3-none-any.whl (123 kB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m123.7/123.7 kB\u001b[0m \u001b[31m10.4 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading msal_extensions-1.3.1-py3-none-any.whl (20 kB)\n",
-            "Downloading onnxruntime-1.26.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (18.2 MB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m18.2/18.2 MB\u001b[0m \u001b[31m82.0 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading pypdfium2-5.9.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.7 MB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m3.7/3.7 MB\u001b[0m \u001b[31m88.9 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hDownloading xlsxwriter-3.2.9-py3-none-any.whl (175 kB)\n",
-            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m175.3/175.3 kB\u001b[0m \u001b[31m15.1 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
-            "\u001b[?25hInstalling collected packages: XlsxWriter, speechrecognition, pypdfium2, onnxruntime, olefile, isodate, cobble, youtube-transcript-api, python-pptx, markdownify, mammoth, magika, azure-core, pdfminer-six, markitdown, azure-ai-documentintelligence, azure-ai-contentunderstanding, pdfplumber, msal, msal-extensions, azure-identity\n",
-            "Successfully installed XlsxWriter-3.2.9 azure-ai-contentunderstanding-1.2.0b1 azure-ai-documentintelligence-1.0.2 azure-core-1.41.0 azure-identity-1.25.3 cobble-0.1.4 isodate-0.7.2 magika-0.6.3 mammoth-1.11.0 markdownify-1.2.2 markitdown-0.1.6 msal-1.37.0 msal-extensions-1.3.1 olefile-0.47 onnxruntime-1.26.0 pdfminer-six-20251230 pdfplumber-0.11.9 pypdfium2-5.9.0 python-pptx-1.0.2 speechrecognition-3.16.1 youtube-transcript-api-1.0.3\n"
-          ]
-        }
-      ],
-      "source": [
-        "!pip install 'markitdown[all]'"
-      ]
-    },
-    {
-      "cell_type": "code",
-      "source": [
-        "#Upload your file\n",
-        "from google.colab import files\n",
-        "\n",
-        "uploaded = files.upload()\n",
-        "\n",
-        "#Get Uploaded filename\n",
-        "input_file = list(uploaded.keys())[0]\n",
-        "\n",
-        "print(f\"Uploaded file: {input_file}\")"
-      ],
-      "metadata": {
-        "colab": {
-          "base_uri": "https://localhost:8080/",
-          "height": 39
-        },
-        "id": "MIixiXGpwit9",
-        "outputId": "3644bd4b-826f-4d6d-9764-f725b336a155"
-      },
-      "execution_count": null,
-      "outputs": [
-        {
-          "output_type": "display_data",
-          "data": {
-            "text/plain": [
-              "<IPython.core.display.HTML object>"
-            ],
-            "text/html": [
-              "\n",
-              "     <input type=\"file\" id=\"files-57bd6e39-e007-4914-8047-3c05b3836d1a\" name=\"files[]\" multiple disabled\n",
-              "        style=\"border:none\" />\n",
-              "     <output id=\"result-57bd6e39-e007-4914-8047-3c05b3836d1a\">\n",
-              "      Upload widget is only available when the cell has been executed in the\n",
-              "      current browser session. Please rerun this cell to enable.\n",
-              "      </output>\n",
-              "      <script>// Copyright 2017 Google LLC\n",
-              "//\n",
-              "// Licensed under the Apache License, Version 2.0 (the \"License\");\n",
-              "// you may not use this file except in compliance with the License.\n",
-              "// You may obtain a copy of the License at\n",
-              "//\n",
-              "//      http://www.apache.org/licenses/LICENSE-2.0\n",
-              "//\n",
-              "// Unless required by applicable law or agreed to in writing, software\n",
-              "// distributed under the License is distributed on an \"AS IS\" BASIS,\n",
-              "// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n",
-              "// See the License for the specific language governing permissions and\n",
-              "// limitations under the License.\n",
-              "\n",
-              "/**\n",
-              " * @fileoverview Helpers for google.colab Python module.\n",
-              " */\n",
-              "(function(scope) {\n",
-              "function span(text, styleAttributes = {}) {\n",
-              "  const element = document.createElement('span');\n",
-              "  element.textContent = text;\n",
-              "  for (const key of Object.keys(styleAttributes)) {\n",
-              "    element.style[key] = styleAttributes[key];\n",
-              "  }\n",
-              "  return element;\n",
-              "}\n",
-              "\n",
-              "// Max number of bytes which will be uploaded at a time.\n",
-              "const MAX_PAYLOAD_SIZE = 100 * 1024;\n",
-              "\n",
-              "function _uploadFiles(inputId, outputId) {\n",
-              "  const steps = uploadFilesStep(inputId, outputId);\n",
-              "  const outputElement = document.getElementById(outputId);\n",
-              "  // Cache steps on the outputElement to make it available for the next call\n",
-              "  // to uploadFilesContinue from Python.\n",
-              "  outputElement.steps = steps;\n",
-              "\n",
-              "  return _uploadFilesContinue(outputId);\n",
-              "}\n",
-              "\n",
-              "// This is roughly an async generator (not supported in the browser yet),\n",
-              "// where there are multiple asynchronous steps and the Python side is going\n",
-              "// to poll for completion of each step.\n",
-              "// This uses a Promise to block the python side on completion of each step,\n",
-              "// then passes the result of the previous step as the input to the next step.\n",
-              "function _uploadFilesContinue(outputId) {\n",
-              "  const outputElement = document.getElementById(outputId);\n",
-              "  const steps = outputElement.steps;\n",
-              "\n",
-              "  const next = steps.next(outputElement.lastPromiseValue);\n",
-              "  return Promise.resolve(next.value.promise).then((value) => {\n",
-              "    // Cache the last promise value to make it available to the next\n",
-              "    // step of the generator.\n",
-              "    outputElement.lastPromiseValue = value;\n",
-              "    return next.value.response;\n",
-              "  });\n",
-              "}\n",
-              "\n",
-              "/**\n",
-              " * Generator function which is called between each async step of the upload\n",
-              " * process.\n",
-              " * @param {string} inputId Element ID of the input file picker element.\n",
-              " * @param {string} outputId Element ID of the output display.\n",
-              " * @return {!Iterable<!Object>} Iterable of next steps.\n",
-              " */\n",
-              "function* uploadFilesStep(inputId, outputId) {\n",
-              "  const inputElement = document.getElementById(inputId);\n",
-              "  inputElement.disabled = false;\n",
-              "\n",
-              "  const outputElement = document.getElementById(outputId);\n",
-              "  outputElement.innerHTML = '';\n",
-              "\n",
-              "  const pickedPromise = new Promise((resolve) => {\n",
-              "    inputElement.addEventListener('change', (e) => {\n",
-              "      resolve(e.target.files);\n",
-              "    });\n",
-              "  });\n",
-              "\n",
-              "  const cancel = document.createElement('button');\n",
-              "  inputElement.parentElement.appendChild(cancel);\n",
-              "  cancel.textContent = 'Cancel upload';\n",
-              "  const cancelPromise = new Promise((resolve) => {\n",
-              "    cancel.onclick = () => {\n",
-              "      resolve(null);\n",
-              "    };\n",
-              "  });\n",
-              "\n",
-              "  // Wait for the user to pick the files.\n",
-              "  const files = yield {\n",
-              "    promise: Promise.race([pickedPromise, cancelPromise]),\n",
-              "    response: {\n",
-              "      action: 'starting',\n",
-              "    }\n",
-              "  };\n",
-              "\n",
-              "  cancel.remove();\n",
-              "\n",
-              "  // Disable the input element since further picks are not allowed.\n",
-              "  inputElement.disabled = true;\n",
-              "\n",
-              "  if (!files) {\n",
-              "    return {\n",
-              "      response: {\n",
-              "        action: 'complete',\n",
-              "      }\n",
-              "    };\n",
-              "  }\n",
-              "\n",
-              "  for (const file of files) {\n",
-              "    const li = document.createElement('li');\n",
-              "    li.append(span(file.name, {fontWeight: 'bold'}));\n",
-              "    li.append(span(\n",
-              "        `(${file.type || 'n/a'}) - ${file.size} bytes, ` +\n",
-              "        `last modified: ${\n",
-              "            file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() :\n",
-              "                                    'n/a'} - `));\n",
-              "    const percent = span('0% done');\n",
-              "    li.appendChild(percent);\n",
-              "\n",
-              "    outputElement.appendChild(li);\n",
-              "\n",
-              "    const fileDataPromise = new Promise((resolve) => {\n",
-              "      const reader = new FileReader();\n",
-              "      reader.onload = (e) => {\n",
-              "        resolve(e.target.result);\n",
-              "      };\n",
-              "      reader.readAsArrayBuffer(file);\n",
-              "    });\n",
-              "    // Wait for the data to be ready.\n",
-              "    let fileData = yield {\n",
-              "      promise: fileDataPromise,\n",
-              "      response: {\n",
-              "        action: 'continue',\n",
-              "      }\n",
-              "    };\n",
-              "\n",
-              "    // Use a chunked sending to avoid message size limits. See b/62115660.\n",
-              "    let position = 0;\n",
-              "    do {\n",
-              "      const length = Math.min(fileData.byteLength - position, MAX_PAYLOAD_SIZE);\n",
-              "      const chunk = new Uint8Array(fileData, position, length);\n",
-              "      position += length;\n",
-              "\n",
-              "      const base64 = btoa(String.fromCharCode.apply(null, chunk));\n",
-              "      yield {\n",
-              "        response: {\n",
-              "          action: 'append',\n",
-              "          file: file.name,\n",
-              "          data: base64,\n",
-              "        },\n",
-              "      };\n",
-              "\n",
-              "      let percentDone = fileData.byteLength === 0 ?\n",
-              "          100 :\n",
-              "          Math.round((position / fileData.byteLength) * 100);\n",
-              "      percent.textContent = `${percentDone}% done`;\n",
-              "\n",
-              "    } while (position < fileData.byteLength);\n",
-              "  }\n",
-              "\n",
-              "  // All done.\n",
-              "  yield {\n",
-              "    response: {\n",
-              "      action: 'complete',\n",
-              "    }\n",
-              "  };\n",
-              "}\n",
-              "\n",
-              "scope.google = scope.google || {};\n",
-              "scope.google.colab = scope.google.colab || {};\n",
-              "scope.google.colab._files = {\n",
-              "  _uploadFiles,\n",
-              "  _uploadFilesContinue,\n",
-              "};\n",
-              "})(self);\n",
-              "</script> "
-            ]
-          },
-          "metadata": {}
-        }
-      ]
-    },
-    {
-      "cell_type": "code",
-      "source": [
-        "# Convert file to Markdown\n",
-        "from markitdown import MarkItDown\n",
-        "import os\n",
-        "\n",
-        "md = MarkItDown()\n",
-        "result = md.convert(input_file)\n",
-        "\n",
-        "# Create output filename\n",
-        "base_name = os.path.splitext(input_file)[0]\n",
-        "output_file = f\"{base_name}.md\"\n",
-        "\n",
-        "# Save MArkdown file\n",
-        "with open(output_file, 'w', encoding=\"utf-8\") as f:\n",
-        "  f.write(result.text_content)\n",
-        "\n",
-        "  print(f\"Markdown file saved as: {output_file}\")"
-      ],
-      "metadata": {
-        "colab": {
-          "base_uri": "https://localhost:8080/"
-        },
-        "id": "eoARdKyAw3O9",
-        "outputId": "3c8613b2-1e90-439b-a176-7a776dfa8ed0"
-      },
-      "execution_count": 6,
-      "outputs": [
-        {
-          "output_type": "stream",
-          "name": "stdout",
-          "text": [
-            "Markdown file saved as: Granger and Cavalheri.md\n"
-          ]
-        }
-      ]
-    },
-    {
-      "cell_type": "code",
-      "source": [
-        "files.download(output_file)"
-      ],
-      "metadata": {
-        "colab": {
-          "base_uri": "https://localhost:8080/",
-          "height": 17
-        },
-        "id": "DEsCgyJixwaq",
-        "outputId": "6d445046-b2bd-4ff0-cf00-741cd0678af7"
-      },
-      "execution_count": 7,
-      "outputs": [
-        {
-          "output_type": "display_data",
-          "data": {
-            "text/plain": [
-              "<IPython.core.display.Javascript object>"
-            ],
-            "application/javascript": [
-              "\n",
-              "    async function download(id, filename, size) {\n",
-              "      if (!google.colab.kernel.accessAllowed) {\n",
-              "        return;\n",
-              "      }\n",
-              "      const div = document.createElement('div');\n",
-              "      const label = document.createElement('label');\n",
-              "      label.textContent = `Downloading \"${filename}\": `;\n",
-              "      div.appendChild(label);\n",
-              "      const progress = document.createElement('progress');\n",
-              "      progress.max = size;\n",
-              "      div.appendChild(progress);\n",
-              "      document.body.appendChild(div);\n",
-              "\n",
-              "      const buffers = [];\n",
-              "      let downloaded = 0;\n",
-              "\n",
-              "      const channel = await google.colab.kernel.comms.open(id);\n",
-              "      // Send a message to notify the kernel that we're ready.\n",
-              "      channel.send({})\n",
-              "\n",
-              "      for await (const message of channel.messages) {\n",
-              "        // Send a message to notify the kernel that we're ready.\n",
-              "        channel.send({})\n",
-              "        if (message.buffers) {\n",
-              "          for (const buffer of message.buffers) {\n",
-              "            buffers.push(buffer);\n",
-              "            downloaded += buffer.byteLength;\n",
-              "            progress.value = downloaded;\n",
-              "          }\n",
-              "        }\n",
-              "      }\n",
-              "      const blob = new Blob(buffers, {type: 'application/binary'});\n",
-              "      const a = document.createElement('a');\n",
-              "      a.href = window.URL.createObjectURL(blob);\n",
-              "      a.download = filename;\n",
-              "      div.appendChild(a);\n",
-              "      a.click();\n",
-              "      div.remove();\n",
-              "    }\n",
-              "  "
-            ]
-          },
-          "metadata": {}
-        },
-        {
-          "output_type": "display_data",
-          "data": {
-            "text/plain": [
-              "<IPython.core.display.Javascript object>"
-            ],
-            "application/javascript": [
-              "download(\"download_4896ca51-0904-4381-bb60-d071e798b968\", \"Granger and Cavalheri.md\", 207717)"
-            ]
-          },
-          "metadata": {}
-        }
-      ]
-    }
-  ]
-}
+  });
+
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(resultText.value).then(() => {
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => copyBtn.textContent = 'Copy', 1800);
+    });
+  });
+</script>
+</body>
+</html>
